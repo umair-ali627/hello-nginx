@@ -1,0 +1,31 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: eu-north-1
+    ECR_REPO: hello-nginx
+    IMAGE_TAG: latest
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION |
+        docker login --username AWS --password-stdin 123185598622.dkr.ecr.eu-north-1.amazonaws.com
+
+  build:
+    commands:
+      - echo Building Docker image
+      - docker build -t $ECR_REPO:$IMAGE_TAG .
+      - docker tag $ECR_REPO:$IMAGE_TAG 123185598622.dkr.ecr.eu-north-1.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Pushing image to ECR
+      - docker push 123185598622.dkr.ecr.eu-north-1.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+      - echo Writing imagedefinitions.json
+      - printf '[{"name":"hello-nginx-container-new","imageUri":"123185598622.dkr.ecr.eu-north-1.amazonaws.com/hello-nginx:latest"}]' > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
